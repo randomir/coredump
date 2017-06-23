@@ -24,3 +24,43 @@ converting them to a list. It works for any number of arguments, and it'll happi
 
 
   [1]: https://docs.python.org/3/reference/expressions.html#calls "positional arguments"
+
+
+## Question: [Split string with lookahead/lookbehind with empty string](https://stackoverflow.com/questions/44729923/split-string-with-lookahead-lookbehind-with-empty-string/)
+
+I'm trying to split any number string such as `3.1415926535897932384626433832795028841971` right
+after each `0` or group of `0`. However, I would like to keep the 0 after each group.
+
+For example, the string `10203040506070809011` should be split into
+
+    ['10', '20', '30', '40', '50', '60', '70', '80', '90', '11']
+
+and the string `3.1415926535897932384626433832795028841971` should be split into
+
+    ['3.14159265358979323846264338327950', '28841971']
+
+Is there any way to split a string based on a lookahead or lookbehind on an empty string? I'm asking
+about the general case, not just with numbers. For example, if I wanted to split apart
+`3:18am5:19pm10:28am` into the separate times without losing the `am` or `pm`, and get an array
+`['3:18am', '5:19pm', '10:28am']`, how would I go about doing this?
+
+## Answer
+
+This simple regex in [``re.findall``](https://docs.python.org/3/library/re.html#re.findall) should suffice:
+
+    l = re.findall(r'[.1-9]+(?:0+|$)', s)
+
+Note:
+
+- ``findall`` returns **all non-overlapping matches** of pattern in string, **as a list** of strings.
+
+- for each match we want the longest string of digits (or a dot) ending with at least one zero, or the end of the string
+
+- the zeros in the end should not be captured as another match (hence the ``(?:...``)
+
+Similarly for you second example:
+
+    >>> re.findall(r'[\d:]+(?:am|pm|$)', '3:18am5:19pm10:28am')
+    ['3:18am', '5:19pm', '10:28am']
+
+No need for lookahead/lookbehind magic, or non-greedy matching.
