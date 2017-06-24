@@ -1,5 +1,6 @@
 # Simple Python ops
 
+
 ## Question: [Combine multiple lists in python to single list](https://stackoverflow.com/questions/44599183/combine-multiple-lists-in-python-to-single-list/)
 
 I have a function that combines two lists in a new list. What is the most pythonic way to extend
@@ -7,6 +8,7 @@ this from just 2 input parameters to an arbitrary number of lists as input. The 
 be a list of lists.
 
 The expected answer for `lt1 = [1, 2, 3]`, `lt2 = [4, 5, 6]` should be `[[1, 2, 3], [4, 5, 6]]`
+
 
 ## Answer
 
@@ -26,6 +28,9 @@ converting them to a list. It works for any number of arguments, and it'll happi
   [1]: https://docs.python.org/3/reference/expressions.html#calls "positional arguments"
 
 
+---
+
+
 ## Question: [Split string with lookahead/lookbehind with empty string](https://stackoverflow.com/questions/44729923/split-string-with-lookahead-lookbehind-with-empty-string/)
 
 I'm trying to split any number string such as `3.1415926535897932384626433832795028841971` right
@@ -43,6 +48,7 @@ Is there any way to split a string based on a lookahead or lookbehind on an empt
 about the general case, not just with numbers. For example, if I wanted to split apart
 `3:18am5:19pm10:28am` into the separate times without losing the `am` or `pm`, and get an array
 `['3:18am', '5:19pm', '10:28am']`, how would I go about doing this?
+
 
 ## Answer
 
@@ -64,3 +70,43 @@ Similarly for you second example:
     ['3:18am', '5:19pm', '10:28am']
 
 No need for lookahead/lookbehind magic, or non-greedy matching.
+
+
+---
+
+
+##Question: [Remove intersection from two lists in python](https://stackoverflow.com/questions/44741442/remove-intersection-from-two-lists-in-python/)
+
+Given two lists, what is the best way to remove the intersection of the two?  For example, given:
+   
+    a = [2,2,2,3]
+    b = [2,2,5]
+
+I want to return:
+    
+    a = [2,3]
+    b = [5]
+
+
+## Answer
+
+Let's assume you wish to handle the general case (same elements appear more than once in each list), the so called **multiset**.
+
+You can use [``collections.Counter``](https://docs.python.org/3/library/collections.html#collections.Counter):
+
+    from collections import Counter
+    intersection = Counter(a) & Counter(b)
+    multiset_a_without_common = Counter(a) - intersection
+    multiset_b_without_common = Counter(b) - intersection
+    new_a = list(multiset_a_without_common.elements())
+    new_b = list(multiset_b_without_common.elements())
+
+For your values of ``a``, ``b``, you'll get:
+
+    a = [2,2,2,3]
+    b = [2,2,5]
+    new_a = [2, 3]
+    new_b = [5]
+
+Note that for a special case of each element appearing exactly once, you can use the standard [``set``](https://docs.python.org/2/library/stdtypes.html#set), as the other answers are suggesting.
+
