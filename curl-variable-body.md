@@ -10,7 +10,9 @@ When I try to use a shell variable in `curl` request data, variable value is not
 
 ## Answer
 
-Single quotes `'` (you're using in `-d` argument) preserve the literal value of each character, including the `$` (see [this SO answer][1]), and that's why your variable `query_string` is not being expanded.
+The single quotes `'` (you're using in the `-d` argument) preserve the literal value of each
+character, including the `$` (see [this SO answer][1]), and that's why your variable `query_string`
+is not being expanded.
 
 Try this:
 

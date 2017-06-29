@@ -105,7 +105,7 @@ Here's a simple solution to your problem (if you have access to GNU ``sed``, ``s
 
     sed 's/^Millionaire/\x0&/' file | sort -z -k4 | uniq -z -f3 | tr -d '\000'
 
-A little explanation is in order:
+An explanation is in order:
 
 - since *all your blocks* begin with the word/line ``Millionaire``, we can use that to split the file in (variably long) blocks by prepending a ``NUL`` character to each ``Millionaire``;
 - then we sort those ``NUL``-separated blocks (using to the ``-z`` flag), but ignoring the first 3 fields (in this case lines: ``Millionaire``, ``\d+``, ``QUESTION|ID...``), using the ``-k``/``--key`` option with start position being the field ``4`` (in your case line 4), and the stop position being the end of the block;
