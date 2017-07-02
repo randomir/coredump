@@ -75,7 +75,7 @@ No need for lookahead/lookbehind magic, or non-greedy matching.
 ---
 
 
-##Question: [Remove intersection from two lists in python](https://stackoverflow.com/questions/44741442/remove-intersection-from-two-lists-in-python/)
+## Question: [Remove intersection from two lists in python](https://stackoverflow.com/questions/44741442/remove-intersection-from-two-lists-in-python/)
 
 Given two lists, what is the best way to remove the intersection of the two?  For example, given:
    
@@ -109,4 +109,40 @@ For your values of ``a``, ``b``, you'll get:
     new_b = [5]
 
 Note that for a special case of each element appearing exactly once, you can use the standard [``set``](https://docs.python.org/2/library/stdtypes.html#set), as the other answers are suggesting.
+
+
+---
+
+
+## Question: [Sorting arrays in Python by a non-integer column](https://stackoverflow.com/q/44871397/404556)
+
+So for example I have an array that I want to sort by a column in an ascending order, and it's easy
+to do for integers using 'sorting()', 'np.arrange()', or 'np.argsort()'.
+
+However, what if my column is consisting of floats?
+
+I mean, I have something like:
+
+    a = array([[1.7, 2, 3],
+               [4.5, 5, 6],
+               [0.1, 0, 1]])
+
+and I want to get this:
+
+    array([[0.1, 0, 1],
+           [1.7, 2, 3],
+           [4.5, 5, 6]])
+
+
+## Answer
+
+You can use a standard Python's [`sorted`](https://docs.python.org/2/library/functions.html#sorted)
+(or `sort` for in-place sorting), no matter what is contained in the sequence. Just use a custom
+`key`, or a custom compare function (`cmp`). For example, to sort a list of lists (2-d array)
+ascending by 4th column:
+
+    >>> a=[[1.0,2.0,3.0,4.0], [4.0,3.0,2.0,1.0], [0,0,0,0]]
+    >>> from operator import itemgetter
+    >>>> sorted(a, key=itemgetter(3))
+    [[0, 0, 0, 0], [4.0, 3.0, 2.0, 1.0], [1.0, 2.0, 3.0, 4.0]]
 
