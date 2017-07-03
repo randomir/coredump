@@ -1,4 +1,4 @@
-# Math problems solved in, or related to Python
+# Math and algorithmic problems solved in, or related to Python
 
 
 ## Question: [FFT division for fast polynomial division](https://stackoverflow.com/questions/44770632/fft-division-for-fast-polynomial-division/)
@@ -182,3 +182,96 @@ I.e:
 - ``(x^2 - 1) / (x - 1) == x + 1``
 - ``(2x^3 - 5x^2 + 10x + 8) / (x^2 + 2x -3) == 3x - 11``, with remainder ``41x - 25``
 - etc. (Last two examples are yours.)
+
+
+---
+
+
+## Question: [Creating a binary tree through a loop](https://stackoverflow.com/q/44895195/404556)
+
+I want to create a binary tree by iterating through a loop. I know how to write a very basic binary tree.
+
+    class Tree(object):
+        def __init__(self):
+            self.left = None
+            self.right = None
+            self.data = None
+    
+    
+    root = Tree()
+    root.data = 75
+    root.left = Tree()
+    root.left.data = 95
+    root.right = Tree()
+    root.right.data = 64
+    
+    root.left.left = Tree()
+    root.left.left.data = 32
+    root.left.right = Tree()
+    root.left.right.data = 93
+    root.left.left = Tree()
+    root.right.left.data = 32
+    root.left.right = Tree()
+    root.right.right.data = 93
+    
+    print(root.data)
+
+This is tedious handtyping it, and if I were to have a list of numbers:
+
+    list = [1,2,3,4,5,6,7]
+
+and put it through a loop to create a binary tree in this order so:
+
+       1 
+     2   3
+    4 5 6 7
+
+How would I write that? and because I'm using this to calculate the sum of all the paths, how do you navigate/iterate through a binary tree:
+
+
+## Answer
+
+To build a full **binary tree** (*not necessarily* a binary search tree) from a list of node values, let's assume values in the list are ordered according to level-order traversal. So, a list from your question 
+
+    values = [1,2,3,4,5,6,7]
+
+will represent a tree:
+
+       1 
+     2   3
+    4 5 6 7
+
+Notice that the root value is at the position `0`, its left child is at the position `1*2-1=1`, the right child at `1*2=2`, etc. In general for a node in the list at index `i`, its left child is at position `(i+1)*2-1`, and the right child at `(i+1)*2`.
+
+Now, we simply need to build the tree recursively, node by node, at each step creating the left and the right subtree.
+
+To make it simpler, let's assume the list of `values` is global.
+
+    class Node(object):
+        def __init__(self, data=None, left=None, right=None):
+            self.data = data
+            self.left = left
+            self.right = right
+    
+    def buildTree(i):
+        if i < len(values):
+            return Node(values[i], left=buildTree((i+1)*2-1), right=buildTree((i+1)*2))
+
+    values = [1,2,3,4,5,6,7]
+    tree = buildTree(0)
+
+To print-out the tree, we can use the [preorder tree traversal](https://en.wikipedia.org/wiki/Tree_traversal#Pre-order):
+
+    def preorder(node):
+        if node is None:
+            return
+        yield node.data
+        for v in preorder(node.left):
+            yield v
+        for v in preorder(node.right):
+            yield v
+
+Like this:
+
+    >>> print list(preorder(tree))
+    [1, 2, 4, 5, 3, 6, 7]
