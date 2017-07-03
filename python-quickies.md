@@ -146,3 +146,60 @@ ascending by 4th column:
     >>>> sorted(a, key=itemgetter(3))
     [[0, 0, 0, 0], [4.0, 3.0, 2.0, 1.0], [1.0, 2.0, 3.0, 4.0]]
 
+
+---
+
+
+## Question: [How to rebuild the object with repr?](https://stackoverflow.com/q/44894261/404556)
+
+My code works perfectly except the last part. I want to recreate the object with repr function but it clearly doesn't work. I tried everything here and on the web but i'm still so confuse. Is there any way to do it and if so what is the syntax ?
+
+    class Modulo(object):
+    
+        def __init__(self, grondtal, waarde = 0):
+            self.grondtal = grondtal
+            self.waarde = waarde % grondtal
+    
+        def __call__(self, m):
+            return Modulo(self.grondtal, m)
+    
+        def __add__(self, other):
+            return Modulo(self.grondtal, self.waarde + other.waarde)
+    
+        def __sub__(self, other):
+            return Modulo(self.grondtal, self.waarde - other.waarde)
+    
+        def __mul__(self, other):
+            return Modulo(self.grondtal, self.waarde * other.waarde)
+    
+        def __eq__(self, other):
+            return self.waarde == other.waarde and self.grondtal == other.grondtal
+    
+        def __ne__(self, other):
+            return not self.__eq__(other)
+    
+        def __str__(self):
+            return  '[%s %% %s]' % (str(self.grondtal), str(self.waarde))
+    
+        def __repr__(self):
+            return '%s' %Modulo(self.grondtal, self.waarde)
+
+
+## Answer
+
+You probably want this:
+
+    def __repr__(self):
+        return "Modulo(%d,%d)" % (self.grondtal, self.waarde)
+
+Or, a little bit more generic:
+
+    def __repr__(self):
+        return "%s(%d,%d)" % (self.__class__.__name__, self.grondtal, self.waarde)
+
+For example:
+
+    >>> m = Modulo(3,2)
+    >>> repr(m)
+    'Modulo(3,2)'    
+
