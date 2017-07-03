@@ -202,3 +202,75 @@ With this, your "change log" will look something like:
     db-host=abc.com --> db-host=xyz.com
 
 Just for completeness, a quick walk-through the `sed` script. We act only on lines containing the `old` value. For each such line, we store it to hold space (`h`), change it to `new`, append that new value to the hold space (joined with newline, `H`) which now holds `old\nnew`. We swap hold with pattern space (`x`), so we can run `s` command that converts it to `old --> new`. After writing that to the `stdout` with `w`, we move the `new` back from hold to pattern space, so it gets written (in-place) to the file processed.
+
+
+---
+
+
+## Question: [How do I insert text to the 1st line of a file using sed?](https://stackoverflow.com/q/44894652/404556)
+
+Hi I'm trying to add text to the 1st line of a file using sed
+so far I've tried
+
+    #!/bin/bash
+    touch test
+    sed -i -e '1i/etc/example/live/example.com/fullchain.pem;\' test
+
+And this doesn't work. Also tried
+
+    #!/bin/bash
+    touch test
+    sed -i "1i ssl_certificate /etc/example/live/example.com/fullchain.pem;" test
+
+this doesn't seem to work either
+oddly when I try 
+
+    #!/bin/bash
+    touch test
+    echo "ssl_certificate /etc/example/live/example.com/fullchain.pem;" > test
+
+I get the 1st line of text to appear when i use `cat test`
+but as soon as i type `sed -i "2i ssl_certificate_key /etc/example/live/example.com/privkey.pem;"`
+I can't see the information that I should do on line 2 this being `ssl_certificate_key /etc/example/live/example.com/privkey.pem`;
+
+So my question to summarise:
+
+ 1. Can text be inserted into the 1st line of a newly created file using sed?
+ 2. If yes whats the best way of inserting text after the 1st line of text?
+
+
+## Answer
+
+Suppose you have a `file` like this:
+
+    one
+    two
+
+Then to append to the first line:
+
+    $ sed '1 s_$_/etc/example/live/example.com/fullchain.pem;_' file
+    one/etc/example/live/example.com/fullchain.pem;
+    two
+
+To insert before the first line:
+
+    $ sed '1 i /etc/example/live/example.com/fullchain.pem;' file
+    /etc/example/live/example.com/fullchain.pem;
+    one
+    two
+
+Or, to append after the first line:
+
+    $ sed '1 a /etc/example/live/example.com/fullchain.pem;' file
+    one
+    /etc/example/live/example.com/fullchain.pem;
+    two
+
+Note the number `1` in those `sed` expressions - that's called [**the address**](https://www.gnu.org/software/sed/manual/html_node/Addresses-overview.html#Addresses-overview) in `sed` terminology. It tells you on which **line** [the command](https://www.gnu.org/software/sed/manual/html_node/Other-Commands.html#Other-Commands) that follows is to operate.
+
+If your file doesn't contain the line you're addressing, the `sed` command won't get executed. That's why you can't insert/append on line 1, if your file is empty.
+
+Instead of using *stream editor*, to append (to empty files), just use a shell redirection `>>`:
+
+    echo "content" >> file
+
