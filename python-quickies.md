@@ -203,3 +203,34 @@ For example:
     >>> repr(m)
     'Modulo(3,2)'    
 
+
+---
+
+
+## Question: [Extract 8-digit numbers from a list of strings](https://stackoverflow.com/q/44958629/404556)
+
+I have a list of strings which may contain letters, symbols, digits, etc, as below:
+
+    list = ['\n', '', '0', '38059', '', '', '?_', '71229366', '', '1', '38059', '', '', '?_', '87640804', '', '2', '38059', '', '', '?_', '71758011', '', '', ':?', ';__', '71229366287640804271758011287169822']
+
+How do I filter out all other strings, except numbers less than 10000000 and greater than 99999999?
+
+Expected Output:
+
+    list = ['71229366', '87640804', '71758011']
+
+
+## Answer
+
+Let me provide a **simple and efficient** answer, using regular expressions. There's no need to
+`map` (duplicating the original list), or to convert everything to `int`s; you are basically asking
+how **to keep all 8-digit integers** in your list:
+
+    >>> filter(re.compile('^\d{8}$').match, data)
+    ['71229366', '87640804', '71758011']
+
+We [`compile`](https://docs.python.org/3/library/re.html#re.compile) a regular expression which
+matches exactly 8 digits and then filter the list by providing a partial application of
+[`regex.match`](https://docs.python.org/3/library/re.html#re.regex.match) to the standard
+[`filter`](https://docs.python.org/3/library/functions.html#filter) function.
+
