@@ -1,4 +1,4 @@
-# On `pip`
+# On `pip` and `virtualenv`
 
 
 ## Question: [How to print warnings and errors when using setuptools (pip)](https://stackoverflow.com/questions/44616823/how-to-print-warnings-and-errors-when-using-setuptools-pip/)
@@ -132,3 +132,39 @@ Test the script:
 
     $ sayhello.py
     Hello!
+
+
+---
+
+
+## Question: [How to move a directory out of ./virualenvs and into my project](https://stackoverflow.com/q/44958496/404556)
+
+Just for the record - I feel so stupid asking this question.
+
+I can not move a directory out of `/home/username/django18/lib/python35/site-packages`
+into my Django project here `/home/username/my_project`
+
+I did:
+
+    pip install django-allauth
+
+to install AllAuth for my project, which in turn dropped it in the above directory, not my project.
+To be neat and organised... I would like my AllAuth diretory to sit in the main directory of my
+project..
+
+I have tried using the bash terminal, but can not get to that directory from it.
+
+
+## Answer
+
+You should not even try moving the installed package, because it (probably) won't work. Python
+virtualenvs [are not really relocatable](https://github.com/pypa/virtualenv/issues/558).
+
+Just create a new virtual environment in your project directory and install all pip packages there:
+
+    cd my_project
+    virtualenv .env
+    . .env/bin/activate
+    pip install -r requirements.txt    # if you have a list of pip requirements
+    pip install django-allauth
+
