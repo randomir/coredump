@@ -23,3 +23,35 @@ If you need a more advanced regex features (like back references, lookahead/look
 
 Also, from the question is not clear, but is seems you're escaping the grouping parenthesis and writing your regex directly inside the condition (like: `[[ "$text" =~ \([a-z]+\) ]]`). It's a good practice to store your regex in a variable (like `re='([a-z]+)'`) and use it like `[[ "$text" =~ $re ]]`. That way your expression will be much clearer and easier to maintain, since you only write ERE syntax and avoid the need for shell-escaping.
 
+
+---
+
+
+## Question: [How can I use bash's select on a newline-separated list?](https://stackoverflow.com/q/44958941/404556)
+
+How can I use bash's `select` on a newline-separated list (so list items can contain spaces)?
+
+
+## Answer
+
+By setting `IFS=$'\n'`, your `list` will be split on newlines, for example:
+
+    #!/bin/bash
+    list=$'one\ntwo\nthree'
+
+    IFS=$'\n'
+    select item in $list; do
+        case "$item" in
+            one) echo "1";;
+            two) echo "2";;
+            *) break;;
+        esac
+    done
+
+Be sure to either do this in a function with `local IFS`, or to restore `IFS` later manually.
+
+If you expect your filenames (in the list) to contain pathname expansion pattern characters `*`,
+`?`, or `[`, you should wrap the `select` statement block above with `set -f` and `set +f` which
+will prevent those patterns to expand to pathnames. It'll also prevent the expansion of extended
+globs (if you enabled `extglob`).
+
