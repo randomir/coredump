@@ -274,3 +274,62 @@ Instead of using *stream editor*, to append (to empty files), just use a shell r
 
     echo "content" >> file
 
+
+---
+
+
+## Question: [Linux bash regex global flag](https://stackoverflow.com/q/44970561/404556)
+
+I want to match string with regex and echo matches. 
+
+    if [[ "${PLUGS}"  =~  \"[a-zA-Z0-9.-]+ ]]; then
+        echo ${BASH_REMATCH[*]}
+    else
+        echo "nothing"
+    fi
+
+But i don't know how to add global flag. If i write regex like ` /\"[a-zA-Z0-9.-]+/g` i get only first match. What i am doing wrong?
+
+Samples data is mysql return of wordpress active plugins `SELECT * FROM wp_options WHERE option_name = 'active_plugins';`
+
+    a:31:{i:0;s:13:"AddMySite.php";i:1;s:19:"akismet/akismet.php";i:2;s:23:"all_in_one_seo_pack.php";i:3;s:16:"authenticate.php";i:4;s:28:"breadcrumb-navigation-xt.php";i:5;s:18:"codeautoescape.php";i:6;s:37:"contact-coldform/contact_coldform.php";i:7;s:32:"custom-query-string-reloaded.php";i:8;s:30:"customizable-post-listings.php";i:9;s:33:"dd-sitemap-gen/dd-sitemap-gen.php";i:10;s:20:"download-counter.php";i:11;s:13:"feedcount.php";i:12;s:13:"full_feed.php";i:13;s:15:"get-weather.php";i:14;s:36:"google-sitemap-generator/sitemap.php";i:15;s:13:"gravatars.php";i:16;s:19:"kill-admin-nags.php";i:17;s:18:"landingsites13.php";i:18;s:30:"nofollow-free/nofollowfree.php";i:19;s:17:"ol_feedburner.php";i:20;s:16:"plugins-used.php";i:21;s:22:"popularity-contest.php";i:22;s:39:"search-everything/search_everything.php";i:23;s:27:"simple-tags/simple-tags.php";i:24;s:26:"simple_recent_comments.php";i:25;s:18:"simple_twitter.php";i:26;s:25:"subscribe-to-comments.php";i:27;s:24:"the-excerpt-reloaded.php";i:28;s:18:"theme-switcher.php";i:29;s:9:"top10.php";i:30;s:16:"wp-db-backup.php";}
+
+
+## Answer
+
+There is no global flag for `bash` regex, `BASH_REMATCH` array contains matches of parenthesized
+subexpressions. So, you would have to rework your regex substantially.
+
+But, if all you want to do is extract all matches and echo them, consider using `grep` with
+`-o`/`--only-matching` flag:
+
+    $ grep -oE '("[a-zA-Z0-9.-]+")' <<<"${PLUGS}"
+    "AddMySite.php"
+    "authenticate.php"
+    "breadcrumb-navigation-xt.php"
+    "codeautoescape.php"
+    "custom-query-string-reloaded.php"
+    "customizable-post-listings.php"
+    "download-counter.php"
+    "feedcount.php"
+    "get-weather.php"
+    "gravatars.php"
+    "kill-admin-nags.php"
+    "landingsites13.php"
+    "plugins-used.php"
+    "popularity-contest.php"
+    "subscribe-to-comments.php"
+    "the-excerpt-reloaded.php"
+    "theme-switcher.php"
+    "top10.php"
+    "wp-db-backup.php"
+
+We also need to use `-E`/`--extended-regexp`, since your regex is POSIX ERE.
+
+Or, to also handle the non-matching case (like in your question):
+
+    if ! grep -oEq '"([a-zA-Z0-9.-]+)"' <<<"${PLUGS}"; then
+        echo "nothing"
+    fi
+
+Note we also use `-q`/`--quiet` to prevent matches output.
