@@ -48,3 +48,60 @@ entering of your expression, like this:
     > eval("()")
     SyntaxError: Unexpected token )
 
+
+---
+
+
+## Question [Robust selector to find all elements of class](https://stackoverflow.com/q/44981644/404556)
+
+How can I get all elements who have a class that begins with `vd-`? My code below works for most cases except for the following:
+
+    class="foo vd-bar"
+
+It works for these cases:
+
+    class="vd-bar foo"
+
+Here is my selector, will it work if the HTML markup uses single quotation marks? For eg; `class='vd-foo'`?
+
+	$('[class^="vd-"]', myElement).each(function(index, elem) {
+		
+	});
+
+
+## Answer
+
+Unfortunately, CSS [Level 3 attribute selectors](https://www.w3.org/TR/css3-selectors/#attribute-selectors) are very limited (and [Level 4
+in draft](https://www.w3.org/TR/selectors4/#attribute-selectors) are not much better).
+
+You will have to use a combination of infix-match and prefix-match attribute selectors to achieve a
+robust selection of all elements with a class that begins with `vd-`:
+
+    [class*=" vd-"], [class^="vd-"] {
+        ...
+    }
+
+The first one will select elements with value of attribute `class` containing `<space>vd-` (cases
+like `foo vd-...`) and the second one will patch the corner case of `vd-` class being the first one
+(cases like `vd-bar foo`).
+
+### Performance
+
+One might be tempted to use *only infix* (substring) selector, on account of assumed performance
+penalty incurred by usage of double attribute selectors (infix and prefix match), knowingly
+sacrificing the accuracy and accepting mismatches like
+[`yrivd-button`](https://en.wiktionary.org/wiki/yrivd) for `vd-button`.
+
+However, [measurements show](https://jsperf.com/css-attribute-selectors-from-javascript/) there is
+**no** statistically significant **difference** in performance between **only infix** match selector
+**and** the combined **infix+prefix** match selector (compare `substringMatch` and
+`classPrefixSelector` on [`jsperf.com`](https://jsperf.com/css-attribute-selectors-from-javascript/)
+test).
+
+The combined selector is only **2% to 7% slower** (depending on browser) than a single attribute
+value match selector.
+
+If someone is concerned about that, she shouldn't use attribute selectors at all, but only class
+selectors `.vd-name`, **which are 2 to 3 times faster** than any of the attribute selectors
+(including the simplest one `[attr]`, which only tests for attribute existence).
+
