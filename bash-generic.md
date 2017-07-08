@@ -55,3 +55,41 @@ If you expect your filenames (in the list) to contain pathname expansion pattern
 will prevent those patterns to expand to pathnames. It'll also prevent the expansion of extended
 globs (if you enabled `extglob`).
 
+
+---
+
+
+## Question: [Accept newline in bash `case`](https://stackoverflow.com/q/44991587/404556)
+
+I have the following script that continuously accepts input from the user until he/she enters some
+form of `y*` or `Y*`.
+
+    while true; do
+    read -p "Are you ready? " yn
+    case $yn in
+    	[Yy]* ) break;;
+    	[Nn]* ) ;;
+    	* ) echo "Please answer yes or no.";;
+    esac
+    done
+
+However, I would like to break out of the while loop when the user simply presses `enter`. I tried
+using `\n`, `\r`, and `\r\n` but these don't seem to be the right patterns.
+
+
+## Answer
+
+Because `read` strips the newline, you'll have to match an empty string, `""`:
+
+    #!/bin/bash
+    while true; do
+        read -p "Are you ready? " yn
+        case "$yn" in
+            [Yy]*|"") break;;
+            [Nn]*) ;;
+            *) echo "Please answer yes or no.";;
+        esac
+    done
+
+Depending on your application logic, you can (obviously) make that a separate case branch, like:
+`"") break;;`.
