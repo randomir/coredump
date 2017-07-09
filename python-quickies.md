@@ -234,3 +234,38 @@ matches exactly 8 digits and then filter the list by providing a partial applica
 [`regex.match`](https://docs.python.org/3/library/re.html#re.regex.match) to the standard
 [`filter`](https://docs.python.org/3/library/functions.html#filter) function.
 
+
+---
+
+
+## Question: [How to generate string dynamically in Python](https://stackoverflow.com/q/45001530/404556)
+
+Supposing we have the code below:
+
+    var1 = "top"
+    var2 = var1 + "bottom"
+
+We want to change `var1` value if a condition is true:
+
+    if COND:
+      var1 = "changed"
+
+Now I want to have `var2` **dynamically changed**. With the code above, `var2` will still have the value "`topbottom`".
+
+How can I do that?
+
+
+## Answer
+
+You can elegantly achieve this with a callback proxy from [`ProxyTypes`](https://pypi.python.org/pypi/ProxyTypes/0.9) package:
+
+    >>> from peak.util.proxies import CallbackProxy
+    >>> var2 = CallbackProxy(lambda: var1+"bottom")
+    >>> var1 = "top"
+    >>> var2
+    'topbottom'
+    >>> var1 = "left"
+    >>> var2
+    'leftbottom'
+
+Each time you access your `var2`, callback lambda will be executed and a dynamically generated value returned.
