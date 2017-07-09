@@ -125,3 +125,53 @@ Also, don't forget to (almost) **always quote your variables**.
 ---
 
 
+## Question: [How to use `find` to search for all files matching pattern for name?](https://stackoverflow.com/q/44995142/404556)
+
+For a list of files:
+
+    ./color_a.txt
+    ./color_b.txt
+    ./color_c.txt
+    ./color/color_d.txt
+    ./color/blue.txt
+    ./color/red.txt
+    ./color/yellow.txt
+
+I want to get all files that have a `color` in name, like this:
+
+    ./color_a.txt
+    ./color_b.txt
+    ./color_c.txt
+    ./color/color_d.txt
+
+The command I use:
+
+    find ./*color* -type f
+
+is not working like that. How should I write it?
+
+
+## Answer
+
+What you probably want for filename filtering is a simple `-name <glob-pattern>` test:
+
+    find -name '*color*' -type f
+
+From `man find`:
+
+     -name pattern
+            Base  of  file  name  (the  path with the leading directories removed) matches shell
+            pattern pattern.  Because the leading directories are removed, the file names
+            considered for a match with -name will never include a  slash,  so `-name a/b' will 
+            never match anything (you probably need to use -path instead).
+
+Just as a side note, when you wrote:
+
+    find ./*color* -type f
+
+the shell expanded the (unquoted) glob pattern `./*color*`, and what was really executed (what `find` saw) was this:
+
+    find ./color ./color_a.txt ./color_b.txt ./color_c.txt -type f
+
+thus producing a list of files in all of those locations.
+
