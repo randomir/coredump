@@ -1,5 +1,6 @@
 # On Unicode in Python
 
+
 ## Question: [Replacing more than one character in unicode python](https://stackoverflow.com/questions/44701267/replacing-more-than-one-character-in-unicode-python/)
 
     import re
@@ -20,3 +21,54 @@ simple alternation [regex](https://docs.python.org/2/library/re.html#re.sub):
 Or, with a range regex:
 
     test = re.sub(u"[\u064e\u0634]", "", test,  flags=re.UNICODE)
+
+
+---
+
+
+## Question: [Print special characters in list in Python](https://stackoverflow.com/q/45001908/404556)
+
+I have a list containing special characters (for example `é` or a white space) and when I print the
+list these characters are printed with their Unicode code, while they are printed correctly if I
+print the list elements separately:
+
+    #!/usr/bin/env python
+    # -*- coding: utf-8 -*-
+
+    my_list = ['éléphant', 'Hello World']
+    print(my_list)
+    print(my_list[0])
+    print(my_list[1])
+
+The output of this code is
+
+    ['\xc3\xa9l\xc3\xa9phant', 'Hello World']
+    éléphant
+    Hello World
+
+And I would like to have `['éléphant', 'Hello World']` for the first output. What should I change?
+
+
+## Answer
+
+If possible, switch to Python 3 and you'll get the expected result.
+
+If you have to make it work in Python 2, then use `unicode` strings:
+
+    my_list = [u'éléphant', u'Hello World']
+
+The way you have it right now, Python is interpreting the first string as a series of bytes with
+values `'\xc3\xa9l\xc3\xa9phant'` which will only be converted to Unicode code points after properly
+UTF-8 decoded: `'\xc3\xa9l\xc3\xa9phant'.decode('utf8') == u'\xe9l\xe9phant'`.
+
+If you wish to print list `repr` and get "unicode" out, you'll have to manually encode it as UTF-8
+(if that's what your terminal understands).
+
+    >>> print repr(my_list).decode('unicode-escape').encode('utf8')
+    [u'éléphant', u'Hello World']
+
+But it's easier to format it manually:
+
+    >>> print ", ".join(my_list)
+    éléphant, Hello World
+
