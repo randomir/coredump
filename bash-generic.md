@@ -93,3 +93,30 @@ Because `read` strips the newline, you'll have to match an empty string, `""`:
 
 Depending on your application logic, you can (obviously) make that a separate case branch, like:
 `"") break;;`.
+
+
+---
+
+
+## Question: [Reading files with leading zero bash command line](https://stackoverflow.com/q/45015515/404556)
+
+For example I have 15 files as follows:
+
+    abc01.txt, abc02.txt, ..., abc09.txt, abc10.txt, abc11.txt, ..., abc15.txt
+
+I want to read these files from command line using bash and perform some operation.
+
+    for i in {1..15}; do COMMAND abc$i.txt; done
+
+Above statement only reads files from 10 to 15 because of leading 0 for the first nine files. If I
+use `[0]` before $ in the above command then it only reads first 9 files. I want to read all files.
+
+
+## Answer
+
+Since `bash` 4.0 leading zero 
+[is supported](http://wiki.bash-hackers.org/scripting/bashchanges#quoting_expansions_substitutions_and_related)
+in `{0x..0y}` (zero-padded brace expansion). With it, you can do it like this:
+
+    for i in {01..15}; do COMMAND "abc$i.txt"; done
+
