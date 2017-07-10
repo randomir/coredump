@@ -1,4 +1,4 @@
-# `sed` magic
+# `sed`/`grep`/`awk` magic
 
 
 ## Question: [Replace all occurrences of a string on lines that contain a pattern](https://stackoverflow.com/questions/44599449/sed-replace-all-occurrences-of-a-string-in-the-second-last-line-of-a-file/)
@@ -333,3 +333,48 @@ Or, to also handle the non-matching case (like in your question):
     fi
 
 Note we also use `-q`/`--quiet` to prevent matches output.
+
+
+---
+
+
+## Question [Track the last word of each line starting with pattern](https://stackoverflow.com/q/45011972/404556)
+
+I have a `*.dat` file that incrementally grows for several hours. I want to monitor a certain value
+in time (the last word in line that contains a pattern "15 RT") so that I can compare them, watch
+its trend and so on.
+
+    ...snip... [convoluted attempt in bash]
+
+
+## Answer
+
+Yes, this should do it:
+
+    tail -f growing.dat | awk '/15 RT/ {print $NF}'
+
+`tail -f` is very efficient, as it listens for file modify event and only outputs new lines when
+added (no need to loop and constantly check if file was modified). `awk` script will simply output
+the last field for each line that contains `15 RT`.
+
+**Edit**. Additionally, if you wish to store that output to a file, and monitor the values in
+terminal, you can use `tee`:
+
+    tail -f growing.dat | awk '/15 RT/ {print $NF}' | tee values.log
+
+Since `awk` is buffering output, to see the values in real-time, you can flush the output after each
+update:
+
+    tail -f growing.dat | awk '/15 RT/ {print $NF; fflush()}' | tee values.log
+
+**Edit 2**. If the file doesn't exist initially, you should use `tail -F`:
+
+    tail -F growing.dat | awk '/15 RT/ {print $NF}'
+
+that way, `tail` will keep retrying to open file if it is inaccessible, it looks like this (message
+is printed to `stderr`):
+
+    tail: cannot open 'growing.dat' for reading: No such file or directory
+    tail: 'growing.dat' has appeared;  following new file
+    -5.1583E+04
+
