@@ -378,3 +378,66 @@ is printed to `stderr`):
     tail: 'growing.dat' has appeared;  following new file
     -5.1583E+04
 
+
+---
+
+
+## Question: [Passing variables to `sed` command](https://stackoverflow.com/q/45039931/404556)
+
+I am trying to run the following in a script. It basically appends TXT_NEW after TXT with the define
+variables. Running the script wrapped in a small bash script throws an error:
+
+    sed: -e expression #1, char 1: unknown command: `''
+
+The script:
+
+    #!/bin/bash
+
+    user="Alpine"
+    new_user="Volverine"
+    file_name=file.txt
+
+    TXT="This Text is by $user"
+    TXT_NEW="This is owned by $new_dev"
+    
+    sed -i "'/$TXT/a ${TXT_NEW}'" $file
+
+Appreciate if someone can have a look and provide some pointers.
+
+
+## Answer
+
+First of all, you have a problem with double quoting. Single quotes inside outer double quotes are
+making `sed` fail, since it's reading the first character `'` as an invalid command.
+
+So, just remove those and the example you provided should work:
+
+    #!/bin/bash
+    user="Alpine"
+    new_user="Volverine"
+    file_name="file.txt"
+    
+    TXT="This Text is by $user"
+    TXT_NEW="This is owned by $new_user"
+    
+    sed -i "/$TXT/a ${TXT_NEW}" "$file_name"
+
+----------
+
+However, since your question is about **passing a variable text** to `sed` append command, you might
+consider using the *append from file command*, `r <filename>`, like this:
+
+    sed -i "/$TXT/r /dev/stdin" $file_name <<<"$TXT_NEW"
+
+The `r` command is similar to `a` (append text), but it reads the text to be appended from the file
+specified. If we say to read from `/dev/stdin` (should work in `bash`), we can provide the text via
+[here-string](http://tldp.org/LDP/abs/html/x17837.html).
+
+Another thing you should do **to generalize** this is to handle `sed` regex metacharacters in your
+"search string" variable `$TXT`, by escaping `\`, `/` and `&`. Perhaps via a helper function
+`escape()`:
+
+    escape() {
+        sed -e 's/[\/&]/\\&/g' <<<"$1"
+    }
+    sed -i "/$(escape "$TXT")/r /dev/stdin" $file_name <<<"$TXT_NEW"
