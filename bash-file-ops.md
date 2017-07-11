@@ -175,3 +175,59 @@ the shell expanded the (unquoted) glob pattern `./*color*`, and what was really 
 
 thus producing a list of files in all of those locations.
 
+
+---
+
+
+## Question: [find seems to be much slower with -print0 option](https://stackoverflow.com/q/45033988/404556)
+
+I am trying to resize photos larger than specific dimensions for 100s of thousands of photos
+collected by a system over past 10 years. I am using `find` and `imagemagick`.
+
+I wrote this script to do it.
+
+    #!/bin/bash
+    
+    find . -type f -iname '*JPG' -print0 | \
+    while IFS= read -r -d '' image; do
+        ...snip...
+    done
+
+The script works on a small amount of files but it takes a long time to start with lots of files. I
+have tested on the command line `find . -type f -iname '*JPG' -print0` vs `find . -type f -iname '*JPG'`.
+The later finds files within a few seconds but the former takes minutes before anything is
+found? Unfortunately the `-print0` is required for dealing with filenames with special characters
+(which are mainly spaces in my case). How can I get this script to be more efficient?
+
+
+## Answer
+
+I can not reproduce the behavior you're experiencing, but can think of two possible explanations.
+
+**First**, you might be experiencing positive effects of page (disk) caching.
+
+When you call `find` for the first time, it traverses files (metadata in inodes), actually reading
+from the data media (HDD) via kernel `syscall`. But kernel (transparently to `find`, or other
+applications) also stores that data in unused areas of memory, which acts as a cache. If this data
+is read again later, it can be quickly read from this cache in memory. This is called
+[page caching](https://en.wikipedia.org/wiki/Page_cache).
+
+So, your second call to `find` (no matter what output separator is used) will be *a lot faster*,
+assuming you are searching over the same files, with the same criteria.
+
+**Second**, since `find`'s output might be buffered, if your files are in many different locations,
+it might take some time before the actual first output to the `while` command. Also if the output is
+line-buffered, that would explain why `-print0` variant takes longer to produce the first output
+(since there are no lines at all).
+
+You can try running `find` with unbuffered output, via `stdbuf` command:
+
+    stdbuf -o0 find . -iname '*.jpg' -type f -print0 ...
+
+One more thing, unrelated to this; to speed-up your `find` search, you might want to consider
+calling it like this:
+
+    find . -iname '*.jpg' -type f -print0
+
+Here we put the `-iname` test before the `-type` test in order to avoid having to call `stat(2)` on
+every file. Even better would be to remove the `-type` test all together, if possible.
