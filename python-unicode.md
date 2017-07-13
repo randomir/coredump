@@ -72,3 +72,41 @@ But it's easier to format it manually:
     >>> print ", ".join(my_list)
     éléphant, Hello World
 
+
+---
+
+
+## Question: [How to convert python Unicode string to bytes](https://stackoverflow.com/q/45074655/404556)
+
+I have a string `x` as below
+
+    x = "\xe9\x94\x99\xe8\xaf\xaf"
+
+This string should be Unicode string, but cannot be displayed (print) correctly.
+
+And the string `y` is Unicode string/ bytes started with `b`, And `y` can be displayed correctly by `y.decode('utf-8')`
+
+    y = b"\xe9\x94\x99\xe8\xaf\xaf"
+
+My question is how to convert x to y ?
+
+
+## Answer
+
+Assuming we're talking about Python3, the Unicode string `x` is 6 code points long. It happens to be
+that each of those code points is in range `0x00` to `0xff` (ASCII subset). We can get the exact
+byte string with the [`raw_unicode_escape`](https://docs.python.org/3/library/codecs.html#text-encodings)
+codec, like this:
+
+    >>> x = "\xe9\x94\x99\xe8\xaf\xaf"
+    >>> y = x.encode('raw_unicode_escape')
+    >>> y
+    b'\xe9\x94\x99\xe8\xaf\xaf'
+    >>> y.decode('utf8')
+    '错误'
+
+Note that this will only work if the string `x` contains only ASCII subrange of Unicode; otherwise
+you'll just get escaped Unicode code points (as the codec's name suggests):
+
+    >>> "šž".encode('raw_unicode_escape')
+    b'\\u0161\\u017e'
