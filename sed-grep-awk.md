@@ -441,3 +441,51 @@ Another thing you should do **to generalize** this is to handle `sed` regex meta
         sed -e 's/[\/&]/\\&/g' <<<"$1"
     }
     sed -i "/$(escape "$TXT")/r /dev/stdin" $file_name <<<"$TXT_NEW"
+
+
+---
+
+
+## Question: [Simple `awk` on `ifconfig`](https://stackoverflow.com/q/45101155/404556)
+
+I'm trying to save my internet IP address to a variable in the shell.
+
+I tried
+
+    ip=`host 'localhost' | awk '{print $4}'`
+
+But that returns
+
+    127.0.0.1
+
+How to save internet IP address to a variable in the shell?
+
+
+## Answer
+
+To get IP addresses of all you local interfaces, try using `ifconfig`, for example like this:
+
+    $ ifconfig | awk '/inet / { print $2 }'
+    127.0.0.1
+    10.8.0.34
+    192.168.1.2
+
+Here you can see I have 3 addresses (the loopback adapter, ethernet and wifi). If you know your
+local network address has `192.*` form, you can get only that one with:
+
+    $ ifconfig | awk '/inet *192/ { print $2 }'
+    192.168.1.2
+
+And to store it into a variable:
+
+    ip=$(ifconfig | awk '/inet *192/ { print $2 }')
+
+Or, to store all addresses in a `bash` array:
+
+    $ ips=($(ifconfig | awk '/inet / { print $2 }'))
+    $ printf "ip: %s\n" "${ips[@]}"
+    ip: 127.0.0.1
+    ip: 10.8.0.34
+    ip: 192.168.1.2
+
+To get IPv6 addresses, look for `inet6` instead of `inet`.
