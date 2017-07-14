@@ -269,3 +269,44 @@ You can elegantly achieve this with a callback proxy from [`ProxyTypes`](https:/
     'leftbottom'
 
 Each time you access your `var2`, callback lambda will be executed and a dynamically generated value returned.
+
+
+---
+
+
+## Question: [How to split string at predefined indices?](https://stackoverflow.com/q/45104747/404556)
+
+I have a string that I'd like to split in specific places into a list of strings. The split points
+are stored in a separate split list. For example:
+
+    test_string = "thequickbrownfoxjumpsoverthelazydog"
+    split_points = [0, 3, 8, 13, 16, 21, 25, 28, 32]
+
+...should return:
+
+    >>> ['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog']
+
+So far I have this as the solution, but it looks incredibly convoluted (solution omitted).
+
+
+## Answer
+
+Like this?
+
+    >>> map(lambda x: test_string[slice(*x)], zip(split_points, split_points[1:]+[None]))
+    ['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog']
+
+We're `zip`ing `split_points` with a shifted self, to create a list of all consecutive pairs of
+slice indexes, like `[(0,3), (3,8), ...]`. We need to add the last slice `(32,None)` manually, since
+`zip` terminates when the shortest sequence is exhausted.
+
+Then we `map` over that list a simple lambda slicer. Note the `slice(*x)` which creates a
+[`slice`](https://docs.python.org/2/library/functions.html#slice) object, e.g. `slice(0, 3, None)`
+which we can use to slice the sequence (string) with standard the
+[item getter](https://docs.python.org/2/library/operator.html#operator.getitem) (`__getslice__` in Python 2).
+
+A little bit more Pythonic implementation could use a list comprehension instead of `map`+`lambda`:
+
+    >>> [test_string[i:j] for i,j in zip(split_points, split_points[1:] + [None])]
+    ['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog']
+
