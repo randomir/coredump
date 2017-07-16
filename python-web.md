@@ -90,3 +90,56 @@ In general (for non-`flask` or non-`werkzeug` apps), we can use a similar `LazyP
 Unrelated to this, you'll also want to fix your `redis_hash_shop_style` decorator to not only fetch
 from `redis`, but to also update (or create) the value if stale (or non-existing), by calling the
 wrapped `f()` when appropriate.
+
+
+---
+
+
+## Question: [“[Errno 1] Operation not permitted” when creating socket](https://stackoverflow.com/q/45127645/404556)
+
+I am trying to use the program DigiKey have made for their Amazon Dash Button hack to monitor for
+when the button is pressed and then send a HTTP GET to IFTTT. I am using a Raspberry Pi to run this.
+
+I need to process all ARP packages on the network, but I can't bind socket to listen for ARP
+packages (getting `[Errno 1] Operation not permitted`).
+
+`<source omitted>`
+
+How can I do it? 
+
+
+## Answer
+
+Since you wish to receive and parse [ARP](https://en.wikipedia.org/wiki/Address_Resolution_Protocol)
+packets (which are on a link layer, OSI layer 2, below IP level you receive with `AF_INET`), you'll
+have to use the low-level packet interface, `AF_PACKET`.
+
+From `man packet` (for `AF_PACKET` sockets):
+
+> The socket_type is either **`SOCK_RAW` for raw packets including the link-level header** or
+`SOCK_DGRAM` for cooked packets  with the link-level header removed.  The link-level header
+information is available in a common format in a `sockaddr_ll` structure.  protocol is the IEEE
+802.3 protocol number in network byte order.  See the `<linux/if_ether.h>` include file  for  a list
+of  allowed  protocols.   **When  protocol is set to `htons(ETH_P_ALL)`, then all protocols are
+received**.  All incoming packets of that protocol type will be passed to the packet socket before
+they are passed to the protocols implemented in the kernel.
+
+So, for sniffing ARP packets, you must use `SOCK_RAW` socket type. However, to use it, from `man 7 raw`:
+
+> Only processes with an effective user ID of 0 or the CAP_NET_RAW capability are allowed to open raw sockets.
+
+therefore, you'll have to run your program with `sudo`.
+
+For socket protocol (third parameter) you might choose `0x0003` as you already have, which means
+`ETH_P_ALL`, receiving **all** packages, or probably better, `ETH_P_ARP` which has a value of
+`0x0806` (see your `/usr/include/linux/if_ether.h`) to receive **only ARP** packages.
+
+All taken together, this looks like this:
+
+    rawSocket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(0x0806))
+
+    while True:
+        packet = rawSocket.recvfrom(2048)
+        # no need to filter-out ARP
+        # less load on user program
+
