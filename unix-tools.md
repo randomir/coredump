@@ -97,3 +97,45 @@ Note that `xargs` supports a custom delimiter via `-d` option, and you could use
 line in `file2.txt` were ending with `,` (but then you should probably strip a newline prefixed to
 each first field).
 
+
+---
+
+
+## Question: [Count pattern in curl output for a list of URLs](https://stackoverflow.com/q/45243043/404556)
+
+How it is possible to count a number of times a pattern occurs in `curl` output for a list of URLs, in `bash`?
+
+For example, if URLs in `url.txt` are:
+
+    xy.com/test.php 
+    xy.com/test2.php
+    xy.com/test3.php
+
+and both `test.php` and `test2.php` return:
+
+    {"error":null,"result":true}
+
+and I want to count how many times a response `{"error":null,"result":true}` occurs, when I execute a command, to get this:
+
+    $ curl -i url.txt ....
+    ...
+    ...
+    Matched result: 2
+
+
+## Answer
+
+If I'm understanding your question correctly, you wish to fetch all URLs from the `url.txt` file
+(one per line) with `curl` and count the number of times the `{"error":null,"result":true}` string
+appears.
+
+You can do it like this:
+
+    $ <url.txt xargs -n1 curl -s -i | grep -F '{"error":null,"result":true}' -c
+    2
+
+We pipe the `url.txt` to `xargs` (assuming URLs are properly quoted, without whitespaces) which
+calls `curl` with one URL at a time (due to `-n1` option). Progress output from `curl` is silenced
+with `-s`, and `-c` tells `grep` to output the count instead of matches, while `-F` looks only for
+fixed string given (not pattern matches).
+
