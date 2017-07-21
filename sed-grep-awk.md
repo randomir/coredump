@@ -489,3 +489,30 @@ Or, to store all addresses in a `bash` array:
     ip: 192.168.1.2
 
 To get IPv6 addresses, look for `inet6` instead of `inet`.
+
+
+---
+
+
+## Question: [Proper use of capture groups in SED command](https://stackoverflow.com/q/45235233/404556)
+
+I need to convert a string `"1,234"` to `1234`. this string is just a part of a bigger line. There
+are thousands of such lines in the file.
+
+I have written a sed command which is not working as I expect it to (command omitted).
+
+
+## Answer
+
+I would suggest you use [POSIX Extended Regular Expressions](http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap09.html) (ERE),
+where you don't have to escape parentheses and the repetition operator. To enable ERE in `sed`, you can
+use the `-E` switch (or `-r` in GNU `sed`). Your expression will then look like this:
+
+    $ echo '"1,234"' | sed -E 's/"([0-9]+),([0-9]+)"/\1\2/g'
+    1234
+
+For completeness, your original BRE expression will function properly if you escape the `+`:
+
+    echo \"1,234\" | sed 's/\("\)\([0-9]\+\)\(,\)\([0-9]\+\)\("\)/\2\4/g'
+    1234
+
