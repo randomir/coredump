@@ -120,3 +120,79 @@ in `{0x..0y}` (zero-padded brace expansion). With it, you can do it like this:
 
     for i in {01..15}; do COMMAND "abc$i.txt"; done
 
+
+---
+
+
+## Question: [Bash `if` with arithmetic expression](https://stackoverflow.com/q/45238867/404556)
+
+    # prints "here" when run in bash
+    if [[ ((9 > 220)) ]]; then echo "here"; fi
+
+I'm confused why the above if statement gets evaluated to true.  Wouldn't `((9 > 220))` evaluate to
+false which would make the if statement false? The code below behaves as expected.  I'm confused why
+using the double parentheses in a double brackets "if" isn't working above though.
+
+    # doesn't print anything
+    if ((9 > 220)); then echo "here"; fi
+
+
+## Answer
+
+There's a fundamental difference between those two
+[compound commands](https://www.gnu.org/software/bash/manual/bash.html#Compound-Commands)
+inside a conditional construct.
+
+### `[[ expression ]]` compound command
+
+In your first example you're using the `[[ expression ]]` command:
+
+    if [[ ((9 > 220)) ]]; then echo "here"; fi
+
+where **parenthesis are treated merely as grouping operators**, used to override the normal
+precedence of other operators (like `!`, `&&`, `||`, `>`, `-gt`, `-e`, etc.). The `>` operator in
+this case is a lexicographic greater than.
+
+This is nicely described in `man bash`:
+
+> `[[ expression ]]`
+
+> Return  a  status of 0 or 1 depending on the evaluation of the conditional expression expression.
+> Expressions are composed of the primaries described below under CONDITIONAL EXPRESSIONS.  Word
+> splitting  and  pathname  expansion are  not  performed  on the words between the [[ and ]]; tilde
+> expansion, parameter and variable expansion, arithmetic expansion, command substitution, process
+> substitution, and quote removal are performed.  Conditional  operators such as `-f` must be
+> unquoted to be recognized as primaries.
+
+> When used with `[[`, the `<` and `>` operators **sort lexicographically** using the current locale.
+
+So, to compare integers in the `[[` compound command, you can use the [conditional expression operators](https://www.gnu.org/software/bash/manual/bash.html#Bash-Conditional-Expressions),
+the same one used by `test` and `[` commands. For example like this:
+
+    if [[ 9 -gt 220 ]]; then echo "here"; fi
+
+The result is the same like when the `-gt` operator is grouped with parenthesis:
+
+    if [[ ((9 -gt 220)) ]]; then echo "here"; fi
+
+Alternatively, you can use the [arithmetic expansion](https://www.gnu.org/software/bash/manual/bash.html#Arithmetic-Expansion-1)
+and exploit the fact that the boolean results are represented as `"0"` or `"1"`:
+
+    if [[ $((9 > 200)) == 1 ]]; then echo "here"; fi
+
+
+### `(( expression ))` compound command
+
+In your second example, you're using the `(( expression ))` command:
+
+    if ((9 > 220)); then echo "here"; fi
+
+where the `expression` is evaluated according to the rules of the
+[shell arithmetic](https://www.gnu.org/software/bash/manual/bash.html#Shell-Arithmetic).
+The `man bash` says:
+
+> `((expression))`
+
+> The  expression  is evaluated according to the rules described below under ARITHMETIC EVALUATION.
+> If the value of the expression is non-zero, the return status is 0; otherwise the return status is
+> 1.  This is exactly  equivalent to `let "expression"`.
