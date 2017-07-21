@@ -516,3 +516,59 @@ For completeness, your original BRE expression will function properly if you esc
     echo \"1,234\" | sed 's/\("\)\([0-9]\+\)\(,\)\([0-9]\+\)\("\)/\2\4/g'
     1234
 
+
+---
+
+
+## Question: [Filter table in text file with IDs from second file](https://stackoverflow.com/q/45242251/404556)
+
+Okay, so I'm pretty new to this sort of thing, so please bear with me. 
+
+I have two files:
+
+`search_results_accesions.txt` is a list of identifiers, one per line. It looks like this (note that
+not all of the identifiers will start with "NP_"):
+
+    $ more search_results_accessions.txt 
+    NP_000020.1
+    NP_000026.2
+    NP_000027.2
+    NP_000029.2
+    NP_000034.1
+    NP_000042.3
+    ...
+
+`prot.accession2taxid.txt` is a file which lists each of the identifiers (and many, many more which
+are not in my list), and gives the corresponding `taxid`. Here is what that looks like (the third
+column contains the `taxid`s):
+
+    $ more prot.accession2taxid
+    accession       accession.version       taxid   gi
+    APZ74649        APZ74649.1      36984   1137646701
+    AQT41667        AQT41667.1      1686310 1150388099
+    WP_080502060    WP_080502060.1  95486   1169627919
+    ASF53620        ASF53620.1      492670  1211447116
+    ASF53621        ASF53621.1      492670  1211447117
+    ASF53622        ASF53622.1      492670  1211447118
+    ASF53623        ASF53623.1      492670  1211447119
+    ...
+
+Fields are tab-separated.
+
+I need to get the `taxid` for each `accession` in my `searchresults_accessions.txt` file. I'm on a
+Unix system and would prefer to use command line or Python, if at all possible.
+
+
+## Answer
+
+Here's a solution with `awk` (you did say *command line or Python*):
+
+    awk 'NR==FNR {ids[$1]=1} NR>FNR && ($1 in ids) {print $1 "\t" $3}' accessions taxids
+
+Explanation:
+
+- we split input lines using the default separators (space or tab)
+- first we read the `accessions` file, then `taxids`
+- for the lines in the first file (while total number of records read is equal to the number of records from current file, `NR==FNR`), we add values from the first column to the associative map `ids`
+- for the lines in the second file, we print the first and the third field, separated by a tab character, but only if the value in the first field is present in our map of accession ids
+
