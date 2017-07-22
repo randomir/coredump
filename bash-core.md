@@ -196,3 +196,40 @@ The `man bash` says:
 > The  expression  is evaluated according to the rules described below under ARITHMETIC EVALUATION.
 > If the value of the expression is non-zero, the return status is 0; otherwise the return status is
 > 1.  This is exactly  equivalent to `let "expression"`.
+
+
+---
+
+
+## Question: [Round number to 10 in Bash](https://stackoverflow.com/q/45240943/404556)
+
+I made a simple function where the result is e.g. 64.998472747. Is there a way this can be rounded
+up to 60? If it is 65.998472747 to be rounded to 70? Is this possible in Bash?
+
+    light=62.998472747
+    printf "$.0f" "$light"
+
+So my function only rounds to a whole number. In this case it is going to round it to 63.
+
+
+## Answer
+
+Since you asked explicitly for a **solution in `bash`**, here it is:
+
+    round10() {
+        echo $(( ((${1%.*}+5)/10)*10 ))
+    }
+
+For example:
+
+    $ round10 64.998472747
+    60
+    $ round10 65.998472747
+    70
+    $ round10 3.14
+    0
+    $ round10 6.28
+    10
+
+We're using [Parameter Expansion](https://www.gnu.org/software/bash/manual/bash.html#Shell-Parameter-Expansion) to first strip suffix decimals after the dot, in combination with [Arithmetic Expansion](https://www.gnu.org/software/bash/manual/bash.html#Arithmetic-Expansion) to perform (now) integer arithmetic.
+
