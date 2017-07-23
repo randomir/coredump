@@ -310,3 +310,24 @@ A little bit more Pythonic implementation could use a list comprehension instead
     >>> [test_string[i:j] for i,j in zip(split_points, split_points[1:] + [None])]
     ['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog']
 
+
+---
+
+
+## Question: [Remove chars from string using Regular Expression](https://stackoverflow.com/q/45266640/404556)
+
+Given an array of strings which contains alphanumeric characters but also punctuations that have to
+be deleted. For instance the string `"0-001"` is converted into `"0001"`. (user's attempt omitted)
+
+
+## Answer
+
+If all you want to do is remove non-alphanumeric characters from a string, you can do it simply with
+[`re.sub`](https://docs.python.org/3/library/re.html#re.sub):
+
+    >>> re.sub('\W', '', '0-001')
+    '0001'
+
+Note, the `\W` will match any character which is not a Unicode word character. This is the opposite
+of `\w`. For ASCII strings it's equivalent to `[^a-zA-Z0-9_]`.
+
