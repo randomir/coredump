@@ -233,3 +233,33 @@ For example:
 
 We're using [Parameter Expansion](https://www.gnu.org/software/bash/manual/bash.html#Shell-Parameter-Expansion) to first strip suffix decimals after the dot, in combination with [Arithmetic Expansion](https://www.gnu.org/software/bash/manual/bash.html#Arithmetic-Expansion) to perform (now) integer arithmetic.
 
+
+---
+
+
+## Question: [Why does this string comparison if statement fail to work](https://stackoverflow.com/q/45265858/404556)
+
+I expect the following code to print only one `x`, but it always gives two:
+
+    #!/bin/sh
+    read i
+    if [[ $i!=1 ]];then
+        echo x
+    fi
+    if [[ $i==1 ]];then
+        echo x
+    fi
+
+Why is this happening?
+
+## Answer
+
+First of all, your script is invalid in POSIX `sh`, since **`[[` is undefined in `sh`**.
+
+In `bash`, on the other hand, **you're missing spaces around comparison operators** `!=` and `==`.
+That's why the expression inside `[[ ]]` is treated as a non-zero length string, which is truthy.
+Hence, `echo` is printed twice.
+
+As suggested so many times on StackOverflow, it's always good to run your shell scripts through
+[shellcheck](http://www.shellcheck.net/) (available as command line tool also), which will help you
+catch and explain many of such errors.
