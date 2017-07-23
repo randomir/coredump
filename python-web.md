@@ -143,3 +143,56 @@ All taken together, this looks like this:
         # no need to filter-out ARP
         # less load on user program
 
+
+---
+
+
+## Question: [Python Requests hanging/freezing](https://stackoverflow.com/q/45267003/404556)
+
+I'm using the requests library to get a lot of webpages from somewhere. Here's the pertinent code:
+
+    response = requests.Session()
+    retries = Retry(total=5, backoff_factor=.1)
+    response.mount('http://', HTTPAdapter(max_retries=retries))
+    response = response.get(url)
+
+After a while it just hangs/freezes (never on the same webpage) while getting the page. Here's the traceback when I interrupt it:
+
+    File "/Users/Student/Hockey/Scrape/html_pbp.py", line 21, in get_pbp
+      response = r.read().decode('utf-8')
+    File "/anaconda/lib/python3.6/http/client.py", line 456, in read
+      return self._readall_chunked()
+    File "/anaconda/lib/python3.6/http/client.py", line 566, in _readall_chunked
+      value.append(self._safe_read(chunk_left))
+    File "/anaconda/lib/python3.6/http/client.py", line 612, in _safe_read
+      chunk = self.fp.read(min(amt, MAXAMOUNT))
+    File "/anaconda/lib/python3.6/socket.py", line 586, in readinto
+      return self._sock.recv_into(b)
+    KeyboardInterrupt
+
+Does anybody know what could be causing it? Or (more importantly) does anybody know a way to stop it
+if it takes more than a certain amount of time so that I could try again?
+
+
+## Answer
+
+Seems like setting a (read) [timeout](http://docs.python-requests.org/en/master/user/advanced/#timeouts) might help you.
+
+Something along the lines of:
+
+    response = response.get(url, timeout=5)
+
+(This will set both connect and read timeout to 5 seconds.)
+
+In `requests`, unfortunately, neither *connect* nor *read* timeouts are set by default, even though
+the [docs](http://docs.python-requests.org/en/master/user/advanced/#timeouts) say it's good to set
+it:
+
+> Most requests to external servers **should have a timeout attached**, in case the server is not
+> responding in a timely manner. By default, requests do not time out unless a timeout value is set
+> explicitly. Without a timeout, your code may hang for minutes or more.
+
+Just for completeness, the **connect timeout** is the number of seconds `requests` will wait for
+your client to establish a connection to a remote machine, and the **read timeout** is the number of
+seconds the client will wait between bytes sent from the server.
+
