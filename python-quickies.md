@@ -331,3 +331,27 @@ If all you want to do is remove non-alphanumeric characters from a string, you c
 Note, the `\W` will match any character which is not a Unicode word character. This is the opposite
 of `\w`. For ASCII strings it's equivalent to `[^a-zA-Z0-9_]`.
 
+
+---
+
+
+## Question: [How to iterate over multiple slices of a list](https://stackoverflow.com/q/45280979/404556)
+
+    for fi in files[0:10 ??? 605:615]:
+        print fi
+
+How can I add `[605:615]` to `[0:10]`?
+
+
+## Answer
+
+You could use [`itertools.chain`](https://docs.python.org/3/library/itertools.html#itertools.chain):
+
+    from itertools import chain
+    
+    for fi in chain(files[0:10], files[605:615]):
+        print fi
+
+`itertools.chain` will make an iterator that will return all elements from the first iterable, then
+from the second, third, etc.
+
