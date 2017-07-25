@@ -120,3 +120,81 @@ part, a list-delimiter (e.g. `None`), and the second part.
     smallerlist = [list(g) for k,g in groupby(breakby(biglist, '|', None),
                                               lambda x: x is not None) if k]
 
+
+---
+
+
+## Question: [Why adding multiple 'nan' in python dictionary giving multiple entries?](https://stackoverflow.com/q/45300367/404556)
+
+Example problem:
+
+    import numpy as np
+    dc = dict()
+    dc[np.float('nan')] = 100
+    dc[np.float('nan')] = 200
+
+It is creating multiple entries for `nan` like
+
+`dc.keys()` will produce `{nan: 100, nan: 200}` but it should create `{nan: 200}`.
+
+
+## Answer
+
+The short answer to your question (of why adding `NaN` keys to a Python `dict` create multiple entries), is because **floating-point `NaN` values are unordered**, i.e. a `NaN` value is not equal to, greater than, or less than anything, including itself. This behavior is defined in the [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754) standard for floating point arithmetic. The explanation why is that so is given by an IEEE 754 committee member [in this answer](https://stackoverflow.com/a/1573715/404556).
+
+---
+
+For a longer, Python-specific, answer, let's first have a look at how item insertion and key comparison work in CPython dictionaries.
+
+When you say `d[key] = val`, [`PyDict_SetItem()`](https://github.com/python/cpython/blob/master/Objects/dictobject.c#L1537) for dictionary `d` is called, which in turn calls (internal) [`insertdict()`](https://github.com/python/cpython/blob/master/Objects/dictobject.c#L1095), which will either update the existing dictionary item, or insert a new item (maybe resizing the hash table consequentially).
+
+The first step on insert is to lookup the `key` in the hash table of dictionary keys. A general-purpose lookup function that gets called in your case (of non-string keys) is [`lookdict()`](https://github.com/python/cpython/blob/master/Objects/dictobject.c#L679).
+
+`lookdict` will use `key`'s hash value to locate the `key`, iterating over a list of possible keys with identical hash value, comparing first by address, then by calling `key`s' equivalence operator(s) (see excellent comments in [`Objects/dictobject.c`](https://github.com/python/cpython/blob/master/Objects/dictobject.c#L132) for more details on hash collision resolution in Python's implementation of [open addressing](https://en.wikipedia.org/wiki/Open_addressing)).
+
+Since every `float('nan')` **has the same hash** value, yet each one is **a different object** (with a different "identity", i.e. memory address), and they're **not equal by their float-value**:
+
+    >>> a, b = float('nan'), float('nan')
+    >>> hash(a), hash(b)
+    (0, 0)
+    >>> id(a), id(b)
+    (94753433907296, 94753433907272)
+    >>> a == b
+    False
+
+when you say:
+
+    d = dict()
+    d[float('nan')] = 1
+    d[float('nan')] = 2
+
+`lookdict` will search for the second `NaN` by looking at its hash (`0`), then trying to resolve hash collision by iterating over keys with the same hash and comparing the keys by identity/address (they are different), then by invoking (the expensive) `PyObject_RichCompareBool`/[`do_richcompare`](https://github.com/python/cpython/blob/master/Objects/object.c#L655), which in turn calls [`float_richcompare`](https://github.com/python/cpython/blob/master/Objects/floatobject.c#L350) which compares floats just as C does:
+
+    /* Comparison is pretty much a nightmare.  When comparing float to float,
+     * we do it as straightforwardly (and long-windedly) as conceivable, so
+     * that, e.g., Python x == y delivers the same result as the platform
+     * C x == y when x and/or y is a NaN.
+
+which behaves according to IEEE 754 standard (from [GNU C library docs](https://www.gnu.org/software/libc/manual/html_node/Infinity-and-NaN.html)):
+
+> **20.5.2 Infinity and NaN**
+>
+> [...]
+>
+> The basic operations and math functions all accept infinity and NaN and produce sensible output. Infinities propagate through calculations as one would expect: for example, 2 + &infin; = &infin;, 4/&infin; = 0, atan (&infin;) = &pi;/2. NaN, on the other hand, infects any calculation that involves it. Unless the calculation would produce the same result no matter what real value replaced NaN, the result is NaN.
+>
+> In comparison operations, positive infinity is larger than all values except itself and NaN, and negative infinity is smaller than all values except itself and NaN. **NaN is unordered: it is not equal to, greater than, or less than anything, including itself. x == x is false if the value of x is NaN.** You can use this to test whether a value is NaN or not, but the recommended way to test for NaN is with the isnan function (see Floating Point Classes). In addition, <, >, <=, and >= will raise an exception when applied to NaNs. 
+
+and which will return `false` for `NaN == NaN`.
+
+That's why Python decides the second `NaN` object is worthy of a new dictionary entry. It may have the same hash, but its address and equivalence test say it is different from all the other `NaN` objects.
+
+However, note that if you always use the same `NaN` object (with the same address) since the address is tested before float equivalence, **you'll get the expected behavior**:
+
+    >>> nan = float('nan')
+    >>> d = dict()
+    >>> d[nan] = 1
+    >>> d[nan] = 2
+    >>> d
+    {nan: 2}
+
