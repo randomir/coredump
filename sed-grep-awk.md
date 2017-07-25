@@ -649,3 +649,49 @@ Output:
     0000000055 2016/12/01
     0000000109 2016/11/01
 
+
+---
+
+
+## Question: [sed: How to extract only first occurence of value](https://stackoverflow.com/q/45315434/404556)
+
+I have file `settings.inc.php` with the following content:
+
+    <?php
+    define('_DB_SERVER_', 'mariadb');
+    define('_DB_NAME_', 'organic');
+    define('_DB_USER_', 'prestashop');
+    define('_DB_PASSWD_', 'prestashop');
+
+I want to extract these values to `bash`, so I managed to create the following command:
+
+    sed -rn 's/^.*_DB_NAME_'\'', '\''(\w+)'\''\);/\1/p' settings.inc.php
+
+This will return `organic`, just as it should, but I would like to improve it further. Let's say we would have this kind of file:
+
+    <?php
+    define('_DB_SERVER_', 'mariadb');
+    define('_DB_NAME_', 'organic1');
+    define('_DB_NAME_', 'organic2');
+    define('_DB_USER_', 'prestashop');
+    define('_DB_PASSWD_', 'prestashop');
+
+Using above command on this file we would get:
+
+    organic1
+    organic2
+
+The thing is: I want for this command to always return only one value, so let's say the first one. Can I achieve that without piping result into second command?
+
+
+## Answer
+
+If you convert your substitute command followed by print to a command block operating only on lines addressed by pattern (containing) `_DB_NAME_`, you can quit after the first match/print:
+
+    $ sed -rn "/_DB_NAME_/ { s/.*'(\w+)'\);$/\1/p;q }" settings.inc.php
+    organic1
+
+Note the `q` command after `p`.
+
+Also, your `sed` script can be simplified by using outer double quotes and anchoring on the end.
+
