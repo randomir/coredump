@@ -572,3 +572,80 @@ Explanation:
 - for the lines in the first file (while total number of records read is equal to the number of records from current file, `NR==FNR`), we add values from the first column to the associative map `ids`
 - for the lines in the second file, we print the first and the third field, separated by a tab character, but only if the value in the first field is present in our map of accession ids
 
+
+---
+
+
+## Question: [unix awk subtracting integer field from month of date field](https://stackoverflow.com/q/45313517/404556)
+
+I have a file with around 10M records. Here is my sample src file:
+
+    0000000566 2017/01/01 0
+    0000000055 2017/01/01 0
+    0000000109 2017/01/01 1
+    0000000940 2017/01/01 0
+    0000000566 2017/01/01 1
+    0000000055 2017/01/01 1
+    0000000109 2017/01/01 2
+
+I essentially need to subtract the last integer value off of the month in the date and print the new value without the integer, thus:
+
+    0000000566 2017/01/01
+    0000000055 2017/01/01
+    0000000109 2016/12/01
+    0000000940 2017/01/01
+    0000000566 2016/12/01
+    0000000055 2016/12/01
+    0000000109 2016/11/01
+
+
+## Answer
+
+If your `awk` supports [time functions](https://www.gnu.org/software/gawk/manual/html_node/Time-Functions.html#Time-Functions)
+`mktime` and `strftime` (which are a GNU extension), you can simply do it like this:
+
+    awk -F'[ /]' '{print $1 " " strftime("%Y/%m/%d", mktime($2" "($3-$5)" "$4" 0 0 0"))}' file
+
+First we convert the date into a Unix timestamp. `mktime` accepts dates only in `"YYYY MM DD HH MM
+SS"` format, that's why we need to construct it manually. But it does the normalization
+automatically, and it will happily convert `"2017 -1 1 0 0 0"` to the same timestamp as `"2016 11 1
+0 0 0"`.
+
+After that we just need to convert the timestamp to "y/m/d" format and print it.
+
+---
+
+Or, you could do the date arithmetic "by hand" in the simple case that doesn't require date
+normalization -- if the day of the month is always `<= 28`. (For days greater that `28`, like `31`,
+you would also need to add clipping/clamping or overflowing to the script below, but then you would
+have to take care of leap years, etc.)
+
+    #!/usr/bin/awk -f
+    
+    BEGIN {
+        FS = "[ /]";
+    }
+
+    {
+        mm = $2 * 12 + ($3 - 1) - $5;
+        y = int(mm / 12);
+        m = mm % 12 + 1;
+        d = $4;
+        printf("%s %04d/%02d/%02d\n", $1, y, m, d);
+    }
+
+So, the idea is simple. We split the line on spaces and slashes, so we can convert year/month into a
+total number of months (`12 * y + m`). Then we subtract the month from the last column and convert
+the total number of months back to year/month via `divmod` operation.
+
+Output:
+
+    $ ./script.awk file
+    0000000566 2017/01/01
+    0000000055 2017/01/01
+    0000000109 2016/12/01
+    0000000940 2017/01/01
+    0000000566 2016/12/01
+    0000000055 2016/12/01
+    0000000109 2016/11/01
+
