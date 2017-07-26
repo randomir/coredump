@@ -198,3 +198,44 @@ However, note that if you always use the same `NaN` object (with the same addres
     >>> d
     {nan: 2}
 
+
+---
+
+
+## Question: [Update JSON value for a particular key, preserving JSON structure](https://stackoverflow.com/q/45336340/404556)
+
+I need to update the value for key (`id`) in the JSON file. Value is stored in the variable `ids`. I
+am able to update the key `id` with `ids` (updated value), but the structure of the JSON file gets
+messed up. Can anyone suggest me a way to doing it without messing up the JSON structure?
+
+    (user's code omitted for brevity)
+
+
+## Answer
+
+I'm guessing you're referring to the order of keys in you dictionary (later in serialized JSON) that
+gets changed. That's because by default `json.load()` uses `dict` as an underlaying mapping type.
+
+But you can change that to a dictionary type that preserves order, called `collections.OrderedDict`:
+
+    from collections import OrderedDict
+    
+    ids = 10
+    filename = 'update_test.json'
+
+    with open(filename, 'r') as f:
+        data = json.load(f, object_pairs_hook=OrderedDict)
+        data['id'] = ids
+    
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=4)
+
+Note the use of `object_pairs_hook=OrderedDict` in [`json.load()`](https://docs.python.org/3/library/json.html#json.load). From the docs:
+
+> `object_pairs_hook` is an optional function that will be called with the result of any object
+> literal decoded with an ordered list of pairs. The return value of object_pairs_hook will be used
+> instead of the `dict`. This feature can be used to implement custom decoders that rely on the
+> order that the key and value pairs are decoded (for example,
+> [collections.OrderedDict()](https://docs.python.org/3/library/collections.html#collections.OrderedDict)
+> will remember the order of insertion).
+
