@@ -355,3 +355,25 @@ You could use [`itertools.chain`](https://docs.python.org/3/library/itertools.ht
 `itertools.chain` will make an iterator that will return all elements from the first iterable, then
 from the second, third, etc.
 
+
+---
+
+
+## Question: How to split string on more than one delimiter?
+
+How to split string `"10,0902\n13897,00641"` on both `\n` and `,`?
+
+## Answer
+
+With [`re.split`](https://docs.python.org/3/library/re.html#re.split) you can split by any regular
+expression pattern. So you can use the alternation `\n|,`:
+
+    >>> string = "10,0902\n13897,00641"
+    >>> re.split(r'\n|,', string)
+    ['10', '0902', '13897', '00641']
+
+or character range, `[\n,]`:
+
+    >>> re.split(r'[\n,]', string)
+    ['10', '0902', '13897', '00641']
+
