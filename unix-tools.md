@@ -139,3 +139,54 @@ calls `curl` with one URL at a time (due to `-n1` option). Progress output from 
 with `-s`, and `-c` tells `grep` to output the count instead of matches, while `-F` looks only for
 fixed string given (not pattern matches).
 
+
+---
+
+
+## Question: [Bash - Start a new instance of a command in another terminal seperate from your current terminal](https://stackoverflow.com/q/45380896/404556)
+
+I have a simple bash script (test.sh) set up like this:
+
+    #!/bin/bash
+    args=("$@")
+    if [[ ( ${args[0]} = "check_capture" ) ]]; then
+      watch -n 1 'ls -lag /home/user/capture0'
+      watch -n 1 'ls -lag /home/user/capture1'
+      watch -n 1 'ls -lag /home/user/capture2' 
+      exit
+    fi
+
+Files are continuously being written to these target locations capture 0, capture 1, and capture 3.
+I want to be able to watch these directories using ls command continuously on 3 seperate terminals,
+and once I run this script (test.sh) from the current terminal, I want it to exit. 
+
+Right now it is blocked by each wait, which I know is a blocking bash command waiting for user input
+control-c. Is there a way I can have the 3 watch commands be executed in seperate terminals then
+reach the exit statement?
+
+
+## Answer
+
+You can start several instances of the terminal in background, each one running a command, like this:
+
+    if [[ ... ]]; then
+        xterm -e 'watch -n 1 "ls -lag /home/user/capture0"' &
+        xterm -e 'watch -n 1 "ls -lag /home/user/capture1"' &
+        ...
+        exit
+    fi
+
+Check `man xterm`:
+
+> **`-e program [ arguments ... ]`**
+>
+> This  option  specifies the program (and its command line arguments) to be run in the xterm
+> window.  It also sets  the window title and icon name to be the basename of the program being
+> executed if neither -T nor -n are given on the command line.  This must be the last option on the
+> command line.
+
+The same option works also for `xfce-terminal` and `gnome-terminal`.
+
+In addition, `xterm` (and others) also support setting the title of the window, position, size
+(called geometry), colors, fonts, and *many, many* other features.
+
