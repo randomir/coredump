@@ -263,3 +263,49 @@ Hence, `echo` is printed twice.
 As suggested so many times on StackOverflow, it's always good to run your shell scripts through
 [shellcheck](http://www.shellcheck.net/) (available as command line tool also), which will help you
 catch and explain many of such errors.
+
+
+---
+
+
+## Question: [Testing grep output in bash](https://stackoverflow.com/q/45392612/404556)
+
+I'm looking for a way to act differently in my `bash` script depending on my external IP address. To
+be more specific if my external IP address is `111.111.111.111` then do some action, otherwise do
+something else.
+
+This is my code:
+
+    extIP=$(curl ifconfig.me | grep 111.111.111.111)
+    
+    if [ -? ${extIP} ]
+    then
+        runExecutable
+    else
+        echo "111.111.111.111 is not your IP."
+    fi
+
+I don't know how to test `extIP`.
+
+
+## Answer
+
+You should test the exit code of your command pipeline
+[directly with `if`](https://www.gnu.org/software/bash/manual/bash.html#Conditional-Constructs), like this:
+
+    addr="111.111.111.111"
+    if curl -s ifconfig.me | grep -qF "$addr"; then
+        runExecutable "$addr" ...
+    else
+        echo "$addr is not your IP."
+    fi
+
+Also, you probably want to silence the `curl`'s progress output with `-s` and `grep`'s matches with
+`-q`, use a fixed string search in `grep` with `-F`, and store your IP address in a variable for
+easier later reuse.
+
+Note the `[` is actually a shell command that exits with `0` if condition that follows is true, or
+with `1` otherwise. `if` than uses that exit code for branching.
+
+See [this bash pitfall](http://mywiki.wooledge.org/BashPitfalls#if_.5Bgrep_foo_myfile.5D) for more details.
+
