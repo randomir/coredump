@@ -239,3 +239,35 @@ Note the use of `object_pairs_hook=OrderedDict` in [`json.load()`](https://docs.
 > [collections.OrderedDict()](https://docs.python.org/3/library/collections.html#collections.OrderedDict)
 > will remember the order of insertion).
 
+
+---
+
+
+## Question: [Size of a dictionary in bytes](https://stackoverflow.com/q/45393694/404556)
+
+How to manually calculate a size of a dictionary (number of bytes it occupies in memory). I read
+that initially it is 280 bytes, at 6th key it increases and then at 86th so on. I want to calculate
+the size it will occupy when I have more than 10000 keys. 
+
+
+## Answer
+
+You can do a quick check with [`sys.getsizeof()`](https://docs.python.org/2/library/sys.html#sys.getsizeof) (it will return the size of an object in bytes):
+
+    >>> import sys, itertools
+    >>> sys.getsizeof(dict(zip(range(1), itertools.cycle([1]))))
+    280
+    >>> sys.getsizeof(dict(zip(range(5), itertools.cycle([1]))))
+    280
+    >>> sys.getsizeof(dict(zip(range(6), itertools.cycle([1]))))
+    1048
+    >>> sys.getsizeof(dict(zip(range(85), itertools.cycle([1]))))
+    3352
+    >>> sys.getsizeof(dict(zip(range(86), itertools.cycle([1]))))
+    12568
+    >>> sys.getsizeof(dict(zip(range(87), itertools.cycle([1]))))
+    12568
+    >>> sys.getsizeof(dict(zip(range(10000), itertools.cycle([1]))))
+    786712
+
+If you are interested in actual inner-workings of Python dictionaries, the [`dictobject.c`](https://github.com/python/cpython/blob/2.7/Objects/dictobject.c) is the definitive resource ([here](https://github.com/python/cpython/blob/3.6/Objects/dictobject.c) for the latest Python 3.6 branch). Also, take a look at [`dictnotes.txt`](https://github.com/python/cpython/blob/2.7/Objects/dictnotes.txt).
