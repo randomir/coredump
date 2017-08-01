@@ -271,3 +271,52 @@ You can do a quick check with [`sys.getsizeof()`](https://docs.python.org/2/libr
     786712
 
 If you are interested in actual inner-workings of Python dictionaries, the [`dictobject.c`](https://github.com/python/cpython/blob/2.7/Objects/dictobject.c) is the definitive resource ([here](https://github.com/python/cpython/blob/3.6/Objects/dictobject.c) for the latest Python 3.6 branch). Also, take a look at [`dictnotes.txt`](https://github.com/python/cpython/blob/2.7/Objects/dictnotes.txt).
+
+
+---
+
+
+## Question: [Is there really an @ operator in Python to calculate dot product?](https://stackoverflow.com/q/45443562/404556)
+
+Is [this answer](https://stackoverflow.com/a/39662710/1175080) it's said:
+
+> In Python 3.5, there is a new operator for the dot product,  so you
+> can write a= A @ B  instead of a= numpy.dot(A,B)
+
+But the `@` operator does not seem to work for me:
+
+    $ python3
+    Python 3.6.1 (default, Apr  4 2017, 09:40:21) 
+    [GCC 4.2.1 Compatible Apple LLVM 8.1.0 (clang-802.0.38)] on darwin
+    Type "help", "copyright", "credits" or "license" for more information.
+    >>> a = [1, 2, 3]
+    >>> b = [4, 5, 6]
+    >>> a @ b
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    TypeError: unsupported operand type(s) for @: 'list' and 'list'
+    >>>
+
+Can you provide a complete example that shows how to use the `@` operator to calculate a dot product?
+
+
+## Answer
+
+See [what's new in Python 3.5, section matrix mult (PEP 465)](https://docs.python.org/3/whatsnew/3.5.html#pep-465-a-dedicated-infix-operator-for-matrix-multiplication):
+
+> PEP 465 adds the `@` infix operator for matrix multiplication. **Currently, no builtin Python
+> types implement the new operator**, however, it can be implemented by defining `__matmul__()`,
+> `__rmatmul__()`, and `__imatmul__()` for regular, reflected, and in-place matrix multiplication.
+> The semantics of these methods is similar to that of methods defining other infix arithmetic
+> operators.
+
+So, you would have to implement those methods yourself.
+
+Or, use `numpy>=1.10` which already has support for the new operator:
+
+    >>> import numpy
+    >>> x = numpy.ones(3)
+    >>> m = numpy.eye(3)
+    >>> x @ m
+    array([ 1., 1., 1.])
+
