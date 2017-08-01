@@ -309,3 +309,61 @@ with `1` otherwise. `if` than uses that exit code for branching.
 
 See [this bash pitfall](http://mywiki.wooledge.org/BashPitfalls#if_.5Bgrep_foo_myfile.5D) for more details.
 
+
+---
+
+
+## Question: [bash script exits unexpectedly after returning from function](https://stackoverflow.com/q/45439239/404556)
+
+My script looks like this (short version):
+
+    #!/usr/bin/env bash
+    set -eu -o pipefail
+
+    function parser() {
+        while read tc; do
+            # some calculation here ...
+            if (( <<some abort condition>> )); then
+                echo "Result: ..."
+                return 0
+            fi
+        done
+    }
+
+    some_command_writing_to_stdout | parser $2
+    output_values
+
+The script executes the command and pipes the output to my local function which finally returns a
+result at the line `echo "Result: ..."` as it is intended to do. After this, it
+shall terminate the command that provides the data which is parsed in this function - this works,
+too.
+
+When reaching `return 0`, I'd think, the next line of the script (right below of the command)
+`output_values;` should be executed, but it is not.
+
+What do I have to change to be able to work on with the results of my parser function, after it
+returns? This can't be intended behavior.
+
+
+## Answer
+
+Let's have a look at `man bash`, section on `pipefail`:
+
+> **`pipefail`**
+> 
+> If set, the return value of a pipeline is the **value of the last (rightmost) command to exit with
+> a non-zero  status**,  or zero if all commands in the pipeline exit successfully.  This option is
+> disabled by default.
+
+Combined with `set -e`, which will exit whenever a command (pipeline) exits with non-zero exit
+status, the only logical conclusion is: **your `some_command_writing_to_stdout` must be exiting with
+a non-zero exit status** (because evidently, `parser` exist with `0`).
+
+This would explain why the next command in the pipeline (`parser`) get executed, and why your script
+finishes after that.
+
+It's easy enough to verify this. Just replace the penultimate statement with:
+
+    (some_command_writing_to_stdout || true) | parser $2
+
+
