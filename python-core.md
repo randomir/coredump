@@ -320,3 +320,38 @@ Or, use `numpy>=1.10` which already has support for the new operator:
     >>> x @ m
     array([ 1., 1., 1.])
 
+
+---
+
+
+## Question: [Optimizing user input loop](https://stackoverflow.com/q/45492382/404556)
+
+    finallist = []
+    for each_time in range(10):
+        x = int(input("Whats your number ? "))
+        finallist.append(x)
+
+It ask 10 times `"Whats your number ? "` and `.append` the obtained answer with `input()`as `int`
+into a list, I wanted to know it is there any simpler (more efficient, shorter) way of doing this,
+with map maybe?
+
+
+## Answer
+
+You *could* do it with a list comprehension:
+
+    finallist = [int(input("Whats your number ? ")) for _ in range(10)]
+
+but I [**wouldn't recommend doing it**](https://stackoverflow.com/q/5753597/404556), since it's less
+clear what's going on.
+
+Or, as Zen of Python would say:
+
+    >>> import this
+    ...
+    Explicit is better than implicit.
+
+List comprehensions (and `map`, `filter`, `reduce`, etc.) are best when your function has no
+side-effects, particularly when using a pure function. And asking user for input has side-effects,
+and at minimum makes your list comprehension nor easily reproducible, since you're now not iterating
+over a fixed input sequence, but over a user (input).
