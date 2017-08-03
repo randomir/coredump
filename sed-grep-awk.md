@@ -752,3 +752,124 @@ traversal, `NR>FNR`, and we print out all the original data + averages:
     Score      7      82      RP      1     0.75
     Score      12     97      GM      5     5
     Score      32     104     LS      3     3
+
+
+---
+
+
+## Question: [sed to replace multiple pairs of identical pattern on same line](https://stackoverflow.com/q/45490296/404556)
+
+I want to replace the file `test.txt` containing
+
+    some text $\alpha$ some text $\alpha$ some text
+    some text $\beta$ some text
+    some text $\gamma$.
+    some text $\delta$
+    $\epsilon$ some text $\epsilon$
+    $\mu$
+
+    some text `$a$` some text `$a$` some text
+    some text `$b$` some text
+    some text `$c$`.
+    some text `$d$`
+    `$e$` some text `$e$`
+    `$f$`
+
+	$$\Alpha$$
+	    $$\Beta$$
+
+	`$$A$$`
+	    `$$B$$`
+
+by
+
+    some text '$\alpha$' some text `$\alpha$` some text
+    some text '$\beta$' some text
+    some text '$\gamma$'.
+    some text '$\delta$'
+    `$\epsilon$` some text `$\epsilon$`
+    `$\mu$`
+
+    some text `$a$` some text
+    some text `$b$` some text
+    some text `$c$`. 
+    some text `$d$`
+    `$e$` some text `$e$`
+    `$m$`
+
+	`$$\Alpha$$`
+	    `$$\Beta$$`
+
+	`$$A$$`
+	    `$$B$$`
+
+In short, I want to do the replacements
+
+    $..$ --> `$..$`
+
+and
+
+    $$..$$ --> `$$..$$`
+
+in one set of of `sed` commands. But if the set of commands is reapplied on the file is should not add extra (`) symbols.
+
+So far I have tried the following set: 
+
+        sed -e 's/^\(\$\$.*\$\$\)/`\1`/g' -i test.txt
+        sed -e 's/[^`]\(\$\$[^`].*[^\$]\$\$\)[^`]/`\1`/g' -i test.txt
+        sed -e 's/^\(\$.[^\$]*\$\)/`\1`/g' -i test.txt
+        sed -e 's/[^`$$]\(\$[^`].[^\$]*\$\)[^`$$]/ `\1` /g' -i test.txt
+
+but this doesnt work fully... 
+
+
+## Answer
+
+You should be able to get off with a single `sed` expression:
+
+    # ERE
+    sed -E 's/([^`$]|^)(\${1,2}[^`$]+\${1,2})([^`$]|$)/\1`\2`\3/g' test.txt
+
+    # or, if you prefer BRE (but only with GNU sed)
+    sed 's/\([^`$]\|^\)\(\$\{1,2\}[^`$]\+\$\{1,2\}\)\([^`$]\|$\)/\1`\2`\3/g' test.txt
+
+gives you:
+
+    some text `$\alpha$` some text `$\alpha$` some text
+    some text `$\beta$` some text
+    some text `$\gamma$`.
+    some text `$\delta$`
+    `$\epsilon$` some text `$\epsilon$`
+    `$\mu$`
+    
+    some text `$a$` some text `$a$` some text
+    some text `$b$` some text
+    some text `$c$`.
+    some text `$d$`
+    `$e$` some text `$e$`
+    `$f$`
+    
+    `$$\Alpha$$`
+        `$$\Beta$$`
+    
+    `$$A$$`
+        `$$B$$`
+
+We match three groups:
+
+- prefix: a single non-backtick or non-dollar or line beginning
+- the meat: one or two `$`, followed by content, followed by one/two `$`
+- suffix: same as prefix, except we match line ending
+
+then print them out, quoting with backticks only the middle group. We need to anchor on those prefix
+and suffix to avoid that double quoting you're experiencing.
+
+**Note** that the POSIX BRE (basic regular expression) form above uses several GNU extensions,
+namely: anchoring on line beginning and line ending used in the middle of expression (and not as the
+first/last character in pattern), alternation (`\|`) and one-or-more duplication operator (`\+`). If
+you need this expression to work in POSIX BRE, you'll need to break it into several (i.e. 3)
+subexpressions and use `\{1,\}` instead of `\+`.
+
+But also note that the POSIX ERE (extended regular expressions) form given should work in all modern
+`sed` environments, on both GNU and BSD systems.
+
