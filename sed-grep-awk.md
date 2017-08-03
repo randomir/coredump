@@ -695,3 +695,60 @@ Note the `q` command after `p`.
 
 Also, your `sed` script can be simplified by using outer double quotes and anchoring on the end.
 
+
+---
+
+
+## Question: [Average column if value in other column matches and print as additional column](https://stackoverflow.com/q/45490144/404556)
+
+I have a file like this:
+
+    Score      1      24      HG      1  
+    Score      2      26      HG      2  
+    Score      5      56      RP      0.5  
+    Score      7      82      RP      1  
+    Score      12     97      GM      5  
+    Score      32     104     LS      3  
+
+I would like to average column 5 if column 4 are identical and print the average as column 6 so that
+it looks like this:
+
+    Score      1      24      HG      1      1.5
+    Score      2      26      HG      2      1.5  
+    Score      5      56      RP      0.5    0.75  
+    Score      7      82      RP      1      0.75  
+    Score      12     97      GM      5      5  
+    Score      32     104     LS      3      3  
+
+I have tried a couple of solutions I found on here.
+e.g.
+
+    awk '{ total[$4] += $5; ++n[$4] } END { for(i in total) print i, total[i] / n[i] }'
+
+but they all end up with this:
+
+    HG      1.5
+    RP      0.75  
+    GM      5  
+    LS      3
+
+Which is undesirable as I lose a lot of information.
+
+
+## Answer
+
+You can iterate through your table twice: calculate the averages (as you already) do on the first
+iteration, and then print them out on the second iteration:
+
+    awk 'NR==FNR { total[$4] += $5; ++n[$4] } NR>FNR { print $0, total[$4] / n[$4] }' file file
+
+Notice the `file` twice at the end. While going through the "first" file, `NR==FNR`, and we sum the
+appropriate values, keeping them in memory (variables `total` and `n`). During "second" file
+traversal, `NR>FNR`, and we print out all the original data + averages:
+
+    Score      1      24      HG      1     1.5
+    Score      2      26      HG      2     1.5
+    Score      5      56      RP      0.5   0.75
+    Score      7      82      RP      1     0.75
+    Score      12     97      GM      5     5
+    Score      32     104     LS      3     3
