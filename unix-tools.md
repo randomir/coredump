@@ -190,3 +190,35 @@ The same option works also for `xfce-terminal` and `gnome-terminal`.
 In addition, `xterm` (and others) also support setting the title of the window, position, size
 (called geometry), colors, fonts, and *many, many* other features.
 
+
+---
+
+
+## Question: [ping summary not showing up](https://stackoverflow.com/q/45513466/404556)
+
+When I run `ping` like this:
+
+    #!/bin/bash
+    ping 8.8.8.8 > pingtest.txt &
+    tail -f pingtest.txt
+
+and abort with `Ctrl+C`, it prints the stats in the output file. But it doesn't when I run it like
+this:
+
+    #!/bin/bash
+    ping 8.8.8.8 | while read pong; do echo "$(date +%Y-%m-%d\|%H:%M:%S): $pong"; done > pingtest.txt &
+    tail -f pingtest.txt
+
+
+## Answer
+
+`ping` will show the stats only if killed with `SIGINT` or `SIGQUIT` (or if the number of pings
+defined with `-c count` is reached, but you're not using that). From `man ping`:
+
+> When the specified number of packets have been sent (and received) or if the program is terminated
+> with a SIGINT, a brief summary is displayed. Shorter current statistics can be obtained without
+> termination of process with signal SIGQUIT.
+
+So, if you want statistics printed, ensure `ping` receives `SIGINT`, for example like this:
+
+    pkill ping -SIGINT
