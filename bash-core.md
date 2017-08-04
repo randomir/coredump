@@ -367,3 +367,75 @@ It's easy enough to verify this. Just replace the penultimate statement with:
     (some_command_writing_to_stdout || true) | parser $2
 
 
+---
+
+
+## Question: [Proper way to use && in bash and terminate on error](https://stackoverflow.com/q/45506642/404556)
+
+I have a script:
+
+    #!/bin/bash
+    mkdir /root/simulatecomplexcommandthatreturns1 &&
+    sleep 5m
+    echo "let's go ahead and delete all the stuff"
+    find /blah/ -delete
+
+it should abort if `mkdir` fails, but it doesn't? Why?
+
+
+## Answer
+
+If you want a script to abort/**exit as soon as a command pipeline exists with a non-zero status**
+(that means the last command in the pipeline, unless `pipefail` enabled), you might consider using:
+
+    set -e
+
+In your example:
+
+    #!/bin/bash
+    set -e
+    mkdir /root/simulatecomplexcommandthatreturns1
+    sleep 5m
+    echo "let's go ahead and delete all the stuff"
+    find /blah/ -delete
+
+when any of the commands fails, your script will exit.
+
+Note however, this can sometimes lead to unwanted exits. For example it's normal for `grep` to exit
+with error if no match was found (you might "silence" such commands with `grep .. || true` ensuring
+the pipeline exits with success).
+
+You'll probably be safer with manually testing for failure. For example:
+
+    if ! mkdir /root/simulatecomplexcommandthatreturns1; then
+        echo "Error description."
+        exit 1
+    fi
+
+The usage of shortcircuiting `&&` and `||` is best reserved for simple command sequences, when the
+execution of the next depends on successful exit of the previous. For example, the command pipeline:
+
+    mkdir /somedir && cp file /somedir && touch /somedir/file
+
+will try to create a directory, if created successfully, it will try to copy the file; and if the
+file was copied successfully, it will touch the file.
+
+Example with `OR`:
+
+    cp file /somedir || exit 1
+
+where we try to copy the file and we exit if copy failed.
+
+But you should be very careful when combining the two, since the result can be unexpected. For example:
+
+    a && b || c
+
+**is not** equal to:
+
+    if a; then b; else c; fi
+
+because `c` in the former expression will get executed whenever **either** of `a` or `b` fails
+(exits with a non-zero status). In the latter expression, `c` is executed only if `a` fails. For
+example:
+
+    true && false || echo "This also gets executed."
